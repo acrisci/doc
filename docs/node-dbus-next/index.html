@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>dbus-next</h1><p>The next great DBus library for NodeJS.</p>
+<p><a href="https://acrisci.github.io/node-dbus-next/">Documentation</a>.</p>
+<p><em>This project is under development and may make breaking changes in minor versions until 1.0.</em></p>
+<h2>About</h2><p>dbus-next is a fully featured high level library for DBus geared primarily towards integration of applications into Linux desktop and mobile environments.</p>
+<p>Desktop application developers can use this library for integrating their applications into desktop environments by implementing common DBus standard interfaces or creating custom plugin interfaces.</p>
+<p>Desktop users can use this library to create their own scripts and utilities to interact with those interfaces for customization of their desktop environment.</p>
+<h2>Node Compatibility</h2><p>As of now, dbus-next targets the latest features of JavaScript. The earliest version supported is <code>6.3.0</code>. However, the library uses <code>BigInt</code> by default for the long integer types which was introduced in <code>10.8.0</code>. If you need to support versions earlier than this, set BigInt compatibility mode. This will configure the library to use <a href="https://github.com/GoogleChromeLabs/jsbi">JSBI</a> as a polyfill for long types.</p>
+<pre class="prettyprint source lang-javascript"><code>const dbus = require('dbus-next');
+dbus.setBigIntCompat(true);</code></pre><h2>The Client Interface</h2><p><em>The Client interface is somewhat stable</em></p>
+<p>You can get a proxy object for a name on the bus with the <code>bus.getProxyObject()</code> function, passing the name and the path. The proxy object contains introspection data about the object including a list of nodes and interfaces. You can get an interface with the <code>object.getInterface()</code> function passing the name of the interface.</p>
+<p>The interface object has methods you can call that correspond to the methods in the introspection data. Pass normal JavaScript objects to the parameters of the function and they will automatically be converted into the advertized DBus type. However, you must use the <code>Variant</code> class to represent DBus variants.</p>
+<p>Methods will similarly return JavaScript objects converted from the advertised DBus type, with the <code>Variant</code> class used to represent returned variants. If the method returns multiple values, they will be returned within an array.</p>
+<p>The interface object is an event emitter that will emit the name of a signal when it is emitted on the bus. Arguments to the callback should correspond to the arguments of the signal.</p>
+<p>This is a brief example of using a proxy object with the <a href="https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html">MPRIS</a> media player interface.</p>
+<pre class="prettyprint source lang-js"><code>let dbus = require('dbus-next');
+let bus = dbus.sessionBus();
+let Variant = dbus.Variant;
+
+// getting an object introspects it on the bus and creates the interfaces
+let obj = await bus.getProxyObject('org.mpris.MediaPlayer2.vlc', '/org/mpris/MediaPlayer2');
+
+// the interfaces are the primary way of interacting with objects on the bus
+let player = obj.getInterface('org.mpris.MediaPlayer2.Player');
+let properties = obj.getInterface('org.freedesktop.DBus.Properties');
+
+// call methods on the interface
+await player.Play()
+
+// get properties with the properties interface (this returns a variant)
+let volumeVariant = await properties.Get('org.mpris.MediaPlayer2.Player', 'Volume');
+console.log('current volume: ' + volumeVariant.value);
+
+// set properties with the properties interface using a variant
+await properties.Set('org.mpris.MediaPlayer2.Player', 'Volume', new Variant('d', volumeVariant.value + 0.05));
+
+// listen to signals
+properties.on('PropertiesChanged', (iface, changed, invalidated) => {
+  for (let prop of Object.keys(changed)) {
+    console.log(`property changed: ${prop}`);
+  }
+});</code></pre><p>For a complete example, see the <a href="https://github.com/acrisci/node-dbus-next/blob/master/examples/mpris.js">MPRIS client</a> example which can be used to control media players on the command line.</p>
+<h2>The Service Interface</h2><p><em>The Service interface is somewhat unstable</em></p>
+<p>You can use the <code>Interface</code> class to define your interfaces. This interfaces uses the proposed <a href="https://github.com/tc39/proposal-decorators">decorators syntax</a> which is not yet part of the ECMAScript standard, but should be included one day. Unfortunately, you'll need a <a href="https://www.npmjs.com/package/@babel/plugin-proposal-decorators">Babel plugin</a> to make this code work for now.</p>
+<pre class="prettyprint source lang-js"><code>let dbus = require('dbus-next');
+let Variant = dbus.Variant;
+
+let {
+  Interface, property, method, signal, DBusError,
+  ACCESS_READ, ACCESS_WRITE, ACCESS_READWRITE
+} = dbus.interface;
+
+let bus = dbus.sessionBus();
+
+class ExampleInterface extends Interface {
+  @property({signature: 's', access: ACCESS_READWRITE})
+  SimpleProperty = 'foo';
+
+  _MapProperty = {
+    'foo': new Variant('s', 'bar'),
+    'bat': new Variant('i', 53)
+  };
+
+  @property({signature: 'a{sv}'})
+  get MapProperty() {
+    return this._MapProperty;
+  }
+
+  set MapProperty(value) {
+    this._MapProperty = value;
+
+    Interface.emitPropertiesChanged(this, {
+      MapProperty: value
+    });
+  }
+
+  @method({inSignature: 's', outSignature: 's'})
+  Echo(what) {
+    return what;
+  }
+
+  @method({inSignature: 'ss', outSignature: 'vv'})
+  ReturnsMultiple(what, what2) {
+    return [
+      new Variant('s', what),
+      new Variant('s', what2)
+    ];
+  }
+
+  @method({inSignature: '', outSignature: ''})
+  ThrowsError() {
+    // the error is returned to the client
+    throw new DBusError('org.test.iface.Error', 'something went wrong');
+  }
+
+  @signal({signature: 's'})
+  HelloWorld(value) {
+    return value;
+  }
+
+  @signal({signature: 'ss'})
+  SignalMultiple(x) {
+    return [
+      'hello',
+      'world'
+    ];
+  }
+}
+
+let example = new ExampleInterface('org.test.iface');
+
+setTimeout(() => {
+  // emit the HelloWorld signal by calling the method with the parameters to
+  // send to the listeners
+  example.HelloWorld('hello');
+}, 500);
+
+async function main() {
+  // make a request for the name on the bus
+  let name = await bus.requestName('org.test.name');
+  // export the interface on the name
+  name.export('/org/test/path', example);
+}
+
+main().catch((err) => {
+  console.log('Error: ' + err);
+});</code></pre><p>Interfaces extend the <code>Interface</code> class. Declare service methods, properties, and signals with the decorators provided from the library. First request a name on the bus with <code>bus.requestName()</code>. Then call <code>name.export()</code> with the path and interface to expose this interface on the bus.</p>
+<p>Methods are called when a DBus client calls that method on the server. Properties can be gotten and set with the <code>org.freedesktop.DBus.Properties</code> interface and are included in the introspection xml.</p>
+<p>To emit a signal, just call the method marked with the <code>signal</code> decorator and the signal will be emitted with the returned value.</p>
+<p>If you have an interface xml description, which can be gotten from the <code>org.freedesktop.DBus.Introspect</code> method on an exported interface, you can generate dbus-next JavaScript classes from the xml file with the <code>bin/generate-interfaces.js</code> utility.</p>
+<h2>Contributing</h2><p>Contributions are welcome. Development happens on <a href="https://github.com/acrisci/node-dbus-next">Github</a>.</p>
+<h2>Similar Projects</h2><p>dbus-next is a fork of <a href="https://github.com/sidorares/dbus-native">dbus-native</a> library. While this library is great, it has many bugs which I don't think can be fixed without completely redesigning the user API. Another library exists <a href="https://github.com/Shouqun/node-dbus">node-dbus</a> which is similar, but this project requires compiling C code and similarly does not provide enough features to create full-featured DBus services.</p>
+<h2>Copyright</h2><p>You can use this code under an MIT license (see LICENSE).</p>
+<p>© 2012, Andrey Sidorov</p>
+<p>© 2018, Tony Crisci</p></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="module-interface-Name.html">Name</a></li><li><a href="NameExistsError.html">NameExistsError</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DBUS_NAME_FLAG_ALLOW_REPLACEMENT">DBUS_NAME_FLAG_ALLOW_REPLACEMENT</a></li><li><a href="global.html#DBUS_NAME_FLAG_DO_NOT_QUEUE">DBUS_NAME_FLAG_DO_NOT_QUEUE</a></li><li><a href="global.html#DBUS_NAME_FLAG_REPLACE_EXISTING">DBUS_NAME_FLAG_REPLACE_EXISTING</a></li><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Apr 04 2019 10:40:15 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: lib/validators.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: lib/validators.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Utility functions to validate bus names, interface names, and object paths.
+ *
+ * @module validators
+ */
+
+const busNameRe = /^[A-Za-z_-][A-Za-z0-9_-]*$/
+/**
+ * Validate the string as a valid bus name.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus}
+ *
+ * @static
+ * @param {string} name - The name to validate as a valid bus name.
+ * @returns {boolean} - Whether the string is a valid bus name.
+ */
+function isBusNameValid(name) {
+  return !!(typeof name === 'string' &amp;&amp;
+    name &amp;&amp;
+    name.length > 0 &amp;&amp;
+    name.length &lt;= 255 &amp;&amp;
+    name[0] !== '.' &amp;&amp;
+    name.indexOf('.') !== -1 &amp;&amp;
+    name.split('.').every((n) => n &amp;&amp; busNameRe.test(n)));
+}
+
+/**
+ * Throws an error if the given string is not a valid bus name.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-bus}
+ *
+ * @static
+ * @param {string} name - The name to validate as a bus name.
+ */
+function assertBusNameValid(name) {
+  if (!isBusNameValid(name)) {
+    throw new Error(`Invalid bus name: ${name}`);
+  }
+}
+
+const pathRe = /^[A-Za-z0-9_]+$/
+/**
+ * Validate the string as a valid object path.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling-object-path}
+ *
+ * @static
+ * @param {string} path - The string to validate as an object path.
+ * @returns {boolean} - Whether the string is a valid object path.
+ */
+function isObjectPathValid(path) {
+  return !!(typeof path === 'string' &amp;&amp;
+      path &amp;&amp;
+      path[0] === '/' &amp;&amp;
+      (path.length === 1 ||
+        (path[path.length-1] !== '/' &amp;&amp;
+         path.split('/').slice(1).every((p) => p &amp;&amp; pathRe.test(p)))));
+}
+
+/**
+ * Throws an error if the given string is not a valid object path.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-marshaling-object-path}
+ *
+ * @static
+ * @param {string} path - The string to validate as an object path.
+ * @returns {boolean} - Whether the string is a valid object path.
+ */
+function assertObjectPathValid(path) {
+  if (!isObjectPathValid(path)) {
+    throw new Error(`Invalid object path: ${path}`);
+  }
+}
+
+const elementRe = /^[A-Za-z_][A-Za-z0-9_]*$/
+/**
+ * Validate the string as a valid interface name.
+ * see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface}
+ *
+ * @static
+ * @param {string} name - The string to validate as an interface name.
+ * @returns {boolean} - Whether the string is a valid interface name.
+ */
+function isInterfaceNameValid(name) {
+  return !!(typeof name === 'string' &amp;&amp;
+    name &amp;&amp;
+    name.length > 0 &amp;&amp;
+    name.length &lt;= 255 &amp;&amp;
+    name[0] !== '.' &amp;&amp;
+    name.indexOf('.') !== -1 &amp;&amp;
+    name.split('.').every((n) => n &amp;&amp; elementRe.test(n)));
+}
+
+/**
+ * Throws an error if the given string is not a valid interface name.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface}
+ *
+ * @static
+ * @param {string} name - The string to validate as an interface name.
+ * @returns {boolean} - Whether the string is a valid interface name.
+ */
+function assertInterfaceNameValid(name) {
+  if (!isInterfaceNameValid(name)) {
+    throw new Error(`Invalid interface name: ${name}`);
+  }
+}
+
+/**
+ * Validate the string is a valid member name
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface}
+ *
+ * @static
+ * @param {string} name - The string to validate as a member name.
+ * @returns {boolean} - Whether the string is a valid member name.
+ */
+function isMemberNameValid(name) {
+  return !!(typeof name === 'string' &amp;&amp;
+    name &amp;&amp;
+    name.length > 0 &amp;&amp;
+    name.length &lt;= 255 &amp;&amp;
+    elementRe.test(name));
+}
+
+/**
+ * Throws an error if the string is not a valid member name.
+ * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol-names-interface}
+ *
+ * @static
+ * @param {string} name - The string to validate as a member name.
+ */
+function assertMemberNameValid(name) {
+  if (!assertMemberNameValid) {
+    throw new Error(`Invalid member name: ${name}`);
+  }
+}
+
+module.exports = {
+  isBusNameValid: isBusNameValid,
+  assertBusNameValid: assertBusNameValid,
+  isObjectPathValid: isObjectPathValid,
+  assertObjectPathValid: assertObjectPathValid,
+  isInterfaceNameValid: isInterfaceNameValid,
+  assertInterfaceNameValid: assertInterfaceNameValid,
+  isMemberNameValid: isMemberNameValid,
+  assertMemberNameValid: assertMemberNameValid
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="module-interface-Name.html">Name</a></li><li><a href="NameExistsError.html">NameExistsError</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DBUS_NAME_FLAG_ALLOW_REPLACEMENT">DBUS_NAME_FLAG_ALLOW_REPLACEMENT</a></li><li><a href="global.html#DBUS_NAME_FLAG_DO_NOT_QUEUE">DBUS_NAME_FLAG_DO_NOT_QUEUE</a></li><li><a href="global.html#DBUS_NAME_FLAG_REPLACE_EXISTING">DBUS_NAME_FLAG_REPLACE_EXISTING</a></li><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Thu Apr 04 2019 10:40:15 GMT-0400 (Eastern Daylight Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
