@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Source: lib/errors.js</title>
+    <title>JSDoc: Source: lib/variant.js</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Source: lib/errors.js</h1>
+    <h1 class="page-title">Source: lib/variant.js</h1>
 
     
 
@@ -26,53 +26,35 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>const { assertInterfaceNameValid } = require('./validators');
-/**
- * An error that can be thrown from DBus [`Interface`]{@link
- * module:interface~Interface} [methods]{@link module:interface.method} and
- * [property]{@link module:interface.property} getters and setters to return
- * the error to the client.
+            <pre class="prettyprint source linenums"><code>/**
+ * @class
+ * A class to represent DBus variants for both the client and service
+ * interfaces. The {@link ProxyInterface} and [`Interface`]{@link
+ * module:interface~Interface} methods, signals, and properties will use this
+ * type to represent variant types. The user should use this class directly for
+ * sending variants to methods if their signature expects the type to be a
+ * variant.
  *
- * This class will also be thrown by {@link ProxyInterface} method calls when
- * the interface method returns an error to the method call.
- *
- * @param {string} type - The type of error. Must be a valid DBus member name.
- * @param {string} text - The error text. Will be seen by the client.
+ * @example
+ * let str = new Variant('s', 'hello');
+ * let num = new Variant('d', 53);
+ * let map = new Variant('a{ss}', { foo: 'bar' });
+ * let list = new Variant('as', [ 'foo', 'bar' ]);
  */
-class DBusError extends Error {
-  /**
-   * Construct a new `DBusError` with the given type and text.
-   */
-  constructor(type, text, reply=null) {
-    assertInterfaceNameValid(type);
-    text = text || '';
-    super(text);
-    this.name = 'DBusError';
-    this.type = type;
-    this.text = text;
-    this.reply = reply;
-  }
-}
-
-/**
- * An error that can be thrown when trying to request a name with {@link
- * MessageBus#requestName} when the {@link DBUS_NAME_FLAG_DO_NOT_QUEUE} flag is
-  * given.
- */
-class NameExistsError extends Error {
-  /**
-   * Create a `NameExistsError`. This constructor should not be called directly.
-   */
-  constructor(message) {
-    message = message || 'Requested a name that already exists on the bus';
-    super(message);
-    this.name = 'NameExistsError';
+class Variant {
+ /**
+  * Construct a new `Variant` with the given signature and value.
+  * @param {string} signature - a DBus type signature for the `Variant`.
+  * @param {any} value - the value of the `Variant` with type specified by the type signature.
+  */
+  constructor(signature, value) {
+    this.signature = signature;
+    this.value = value;
   }
 }
 
 module.exports = {
-  DBusError: DBusError,
-  NameExistsError: NameExistsError,
+  Variant: Variant
 };
 </code></pre>
         </article>
