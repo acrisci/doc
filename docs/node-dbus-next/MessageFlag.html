@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>JSDoc: Class: Variant</title>
+    <title>JSDoc: Class: MessageFlag</title>
 
     <script src="scripts/prettify/prettify.js"> </script>
     <script src="scripts/prettify/lang-css.js"> </script>
@@ -17,7 +17,7 @@
 
 <div id="main">
 
-    <h1 class="page-title">Class: Variant</h1>
+    <h1 class="page-title">Class: MessageFlag</h1>
 
     
 
@@ -28,13 +28,10 @@
 
 <header>
     
-        <h2><span class="attribs"><span class="type-signature"></span></span>Variant<span class="signature">(signature, value)</span><span class="type-signature"></span></h2>
+        <h2><span class="attribs"><span class="type-signature"></span></span>MessageFlag<span class="signature">()</span><span class="type-signature"></span></h2>
         
-            <div class="class-description"><p>A class to represent DBus variants for both the client and service
-interfaces. The <a href="ProxyInterface.html">ProxyInterface</a> and <a href="module-interface-Interface.html"><code>Interface</code></a> methods, signals, and properties will use this
-type to represent variant types. The user should use this class directly for
-sending variants to methods if their signature expects the type to be a
-variant.</p></div>
+            <div class="class-description"><p>An flag enum for the <a href="Message.html">Message</a> <code>flags</code> member to configure behavior
+for message processing.</p></div>
         
     
 </header>
@@ -49,95 +46,19 @@ variant.</p></div>
     
 
     
-    <h4 class="name" id="Variant"><span class="type-signature"></span>new Variant<span class="signature">(signature, value)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="MessageFlag"><span class="type-signature"></span>new MessageFlag<span class="signature">()</span><span class="type-signature"></span></h4>
     
 
     
 
 
 
-<div class="description">
-    <p>Construct a new <code>Variant</code> with the given signature and value.</p>
-</div>
 
 
 
 
 
 
-
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>signature</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">string</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>a DBus type signature for the <code>Variant</code>.</p></td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>value</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type">any</span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last"><p>the value of the <code>Variant</code> with type specified by the type signature.</p></td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -173,12 +94,19 @@ variant.</p></div>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lib_variant.js.html">lib/variant.js</a>, <a href="lib_variant.js.html#line22">line 22</a>
+        <a href="lib_constants.js.html">lib/constants.js</a>, <a href="lib_constants.js.html#line188">line 188</a>
     </li></ul></dd>
     
 
     
 
+    
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol">https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol</a></li>
+        </ul>
+    </dd>
     
 
     
@@ -202,14 +130,6 @@ variant.</p></div>
 
 
 
-    <h5>Example</h5>
-    
-    <pre class="prettyprint"><code>let str = new Variant('s', 'hello');
-let num = new Variant('d', 53);
-let map = new Variant('a{ss}', { foo: 'bar' });
-let list = new Variant('as', [ 'foo', 'bar' ]);</code></pre>
-
-
 
     
     </div>
@@ -226,6 +146,134 @@ let list = new Variant('as', [ 'foo', 'bar' ]);</code></pre>
 
     
 
+    
+        <h3 class="subsection-title">Members</h3>
+
+        
+            
+<h4 class="name" id=".NO_AUTO_START"><span class="type-signature">(static, constant) </span>NO_AUTO_START<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>This message should not autostart a service.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="lib_constants.js.html">lib/constants.js</a>, <a href="lib_constants.js.html#line206">line 206</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
+            
+<h4 class="name" id=".NO_REPLY_EXPECTED"><span class="type-signature">(static, constant) </span>NO_REPLY_EXPECTED<span class="type-signature"></span></h4>
+
+
+
+
+<div class="description">
+    <p>No reply is expected from this message.</p>
+</div>
+
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="lib_constants.js.html">lib/constants.js</a>, <a href="lib_constants.js.html#line197">line 197</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+        
     
 
     

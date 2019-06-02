@@ -43,17 +43,23 @@
 
 
     <section>
-        <article><h1>dbus-next</h1><p>The next great DBus library for NodeJS.</p>
+        <article><h1>dbus-next</h1>
+<p>The next great DBus library for NodeJS.</p>
 <p><a href="https://acrisci.github.io/doc/node-dbus-next/">Documentation</a>.</p>
 <p><em>This project is under development and may make breaking changes in minor versions until 1.0.</em></p>
-<h2>About</h2><p>dbus-next is a fully featured high level library for DBus geared primarily towards integration of applications into Linux desktop and mobile environments.</p>
+<h2>About</h2>
+<p>dbus-next is a fully featured high level library for DBus geared primarily towards integration of applications into Linux desktop and mobile environments.</p>
 <p>Desktop application developers can use this library for integrating their applications into desktop environments by implementing common DBus standard interfaces or creating custom plugin interfaces.</p>
 <p>Desktop users can use this library to create their own scripts and utilities to interact with those interfaces for customization of their desktop environment.</p>
-<h2>Node Compatibility</h2><p>As of now, dbus-next targets the latest features of JavaScript. The earliest version supported is <code>6.3.0</code>. However, the library uses <code>BigInt</code> by default for the long integer types which was introduced in <code>10.8.0</code>. If you need to support versions earlier than this, set BigInt compatibility mode. This will configure the library to use <a href="https://github.com/GoogleChromeLabs/jsbi">JSBI</a> as a polyfill for long types.</p>
+<h2>Node Compatibility</h2>
+<p>As of now, dbus-next targets the latest features of JavaScript. The earliest version supported is <code>6.3.0</code>. However, the library uses <code>BigInt</code> by default for the long integer types which was introduced in <code>10.8.0</code>. If you need to support versions earlier than this, set BigInt compatibility mode. This will configure the library to use <a href="https://github.com/GoogleChromeLabs/jsbi">JSBI</a> as a polyfill for long types.</p>
 <pre class="prettyprint source lang-javascript"><code>const dbus = require('dbus-next');
-dbus.setBigIntCompat(true);</code></pre><h2>The Client Interface</h2><p><em>The Client interface is somewhat stable</em></p>
+dbus.setBigIntCompat(true);
+</code></pre>
+<h2>The Client Interface</h2>
+<p><em>The Client interface is somewhat stable</em></p>
 <p>You can get a proxy object for a name on the bus with the <code>bus.getProxyObject()</code> function, passing the name and the path. The proxy object contains introspection data about the object including a list of nodes and interfaces. You can get an interface with the <code>object.getInterface()</code> function passing the name of the interface.</p>
-<p>The interface object has methods you can call that correspond to the methods in the introspection data. Pass normal JavaScript objects to the parameters of the function and they will automatically be converted into the advertized DBus type. However, you must use the <code>Variant</code> class to represent DBus variants.</p>
+<p>The interface object has methods you can call that correspond to the methods in the introspection data. Pass normal JavaScript objects to the parameters of the function and they will automatically be converted into the advertised DBus type. However, you must use the <code>Variant</code> class to represent DBus variants.</p>
 <p>Methods will similarly return JavaScript objects converted from the advertised DBus type, with the <code>Variant</code> class used to represent returned variants. If the method returns multiple values, they will be returned within an array.</p>
 <p>The interface object is an event emitter that will emit the name of a signal when it is emitted on the bus. Arguments to the callback should correspond to the arguments of the signal.</p>
 <p>This is a brief example of using a proxy object with the <a href="https://specifications.freedesktop.org/mpris-spec/latest/Player_Interface.html">MPRIS</a> media player interface.</p>
@@ -83,8 +89,11 @@ properties.on('PropertiesChanged', (iface, changed, invalidated) => {
   for (let prop of Object.keys(changed)) {
     console.log(`property changed: ${prop}`);
   }
-});</code></pre><p>For a complete example, see the <a href="https://github.com/acrisci/node-dbus-next/blob/master/examples/mpris.js">MPRIS client</a> example which can be used to control media players on the command line.</p>
-<h2>The Service Interface</h2><p><em>The Service interface is somewhat stable</em></p>
+});
+</code></pre>
+<p>For a complete example, see the <a href="https://github.com/acrisci/node-dbus-next/blob/master/examples/mpris.js">MPRIS client</a> example which can be used to control media players on the command line.</p>
+<h2>The Service Interface</h2>
+<p><em>The Service interface is somewhat stable</em></p>
 <p>You can use the <code>Interface</code> class to define your interfaces. This interfaces uses the proposed <a href="https://github.com/tc39/proposal-decorators">decorators syntax</a> which is not yet part of the ECMAScript standard, but should be included one day. Unfortunately, you'll need a <a href="https://www.npmjs.com/package/@babel/plugin-proposal-decorators">Babel plugin</a> to make this code work for now.</p>
 <pre class="prettyprint source lang-js"><code>let dbus = require('dbus-next');
 let Variant = dbus.Variant;
@@ -161,18 +170,21 @@ setTimeout(() => {
 
 async function main() {
   // make a request for the name on the bus
-  let name = await bus.requestName('org.test.name');
-  // export the interface on the name
-  name.export('/org/test/path', example);
+  await bus.requestName('org.test.name');
+  // export the interface on the path
+  bus.export('/org/test/path', example);
 }
 
 main().catch((err) => {
   console.log('Error: ' + err);
-});</code></pre><p>Interfaces extend the <code>Interface</code> class. Declare service methods, properties, and signals with the decorators provided from the library. First request a name on the bus with <code>bus.requestName()</code>. Then call <code>name.export()</code> with the path and interface to expose this interface on the bus.</p>
+});
+</code></pre>
+<p>Interfaces extend the <code>Interface</code> class. Declare service methods, properties, and signals with the decorators provided from the library. You can optionally request a name on the bus with <code>bus.requestName()</code> so clients have a well-known name to connect to. Then call <code>bus.export()</code> with the path and interface to expose this interface on the bus.</p>
 <p>Methods are called when a DBus client calls that method on the server. Properties can be gotten and set with the <code>org.freedesktop.DBus.Properties</code> interface and are included in the introspection xml.</p>
 <p>To emit a signal, just call the method marked with the <code>signal</code> decorator and the signal will be emitted with the returned value.</p>
 <p>If you have an interface xml description, which can be gotten from the <code>org.freedesktop.DBus.Introspect</code> method on an exported interface, you can generate dbus-next JavaScript classes from the xml file with the <code>bin/generate-interfaces.js</code> utility.</p>
-<h2>The Low-Level Interface</h2><p>The low-level interface can be used to interact with messages directly. Create new messages with the <code>Message</code> class to be sent on the bus as method calls, signals, method returns, or errors. Method calls can be called with the <code>call()</code> method of the <code>MessageBus</code> to await a reply and <code>send()</code> can be use for messages that don't expect a reply.</p>
+<h2>The Low-Level Interface</h2>
+<p>The low-level interface can be used to interact with messages directly. Create new messages with the <code>Message</code> class to be sent on the bus as method calls, signals, method returns, or errors. Method calls can be called with the <code>call()</code> method of the <code>MessageBus</code> to await a reply and <code>send()</code> can be use for messages that don't expect a reply.</p>
 <pre class="prettyprint source lang-js"><code>let dbus = require('dbus-next');
 let Message = dbus.Message;
 
@@ -204,10 +216,169 @@ bus.addMethodHandler((msg) => {
 // listen to any messages that are sent to the bus
 bus.on('message', (msg) => {
   console.log('got a message: ', msg);
-});</code></pre><p>For a complete example of how to use the low-level interface to send messages, see the <code>dbus-next-send.js</code> script in the <code>bin</code> directory.</p>
-<h2>Contributing</h2><p>Contributions are welcome. Development happens on <a href="https://github.com/acrisci/node-dbus-next">Github</a>.</p>
-<h2>Similar Projects</h2><p>dbus-next is a fork of <a href="https://github.com/sidorares/dbus-native">dbus-native</a> library. While this library is great, it has many bugs which I don't think can be fixed without completely redesigning the user API. Another library exists <a href="https://github.com/Shouqun/node-dbus">node-dbus</a> which is similar, but also not provide enough features to create full-featured DBus services.</p>
-<h2>Copyright</h2><p>You can use this code under an MIT license (see LICENSE).</p>
+});
+</code></pre>
+<p>For a complete example of how to use the low-level interface to send messages, see the <code>dbus-next-send.js</code> script in the <code>bin</code> directory.</p>
+<h2>The Type System</h2>
+<p>Values that are sent or received over the message bus always have an associated signature that specifies the types of those values. For the high-level client and service, these signatures are specified in XML data which is advertised in a <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#introspection-format">standard DBus interface</a>. The high-level client dynamically creates classes based on this introspection data with methods and signals with arguments based on the type signature. The high-level service does the inverse by introspecting the class to create the introspection XML data which is advertised on the bus for clients.</p>
+<p>Each code in the signature is mapped to a JavaScript type as shown in the table below.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Code</th>
+<th>JS Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BYTE</td>
+<td>y</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>BOOLEAN</td>
+<td>b</td>
+<td>boolean</td>
+<td></td>
+</tr>
+<tr>
+<td>INT16</td>
+<td>n</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>UINT16</td>
+<td>q</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>INT32</td>
+<td>i</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>UINT32</td>
+<td>u</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>INT64</td>
+<td>x</td>
+<td>BigInt</td>
+<td>Use <code>dbus.setBigIntCompat(true)</code> to use <code>JSBI</code></td>
+</tr>
+<tr>
+<td>UINT64</td>
+<td>t</td>
+<td>BigInt</td>
+<td>Use <code>dbus.setBigIntCompat(true)</code> to use <code>JSBI</code></td>
+</tr>
+<tr>
+<td>DOUBLE</td>
+<td>d</td>
+<td>number</td>
+<td></td>
+</tr>
+<tr>
+<td>STRING</td>
+<td>s</td>
+<td>string</td>
+<td></td>
+</tr>
+<tr>
+<td>OBJECT_PATH</td>
+<td>o</td>
+<td>string</td>
+<td>Must be a valid object path</td>
+</tr>
+<tr>
+<td>SIGNATURE</td>
+<td>g</td>
+<td>string</td>
+<td>Must be a valid signature</td>
+</tr>
+<tr>
+<td>ARRAY</td>
+<td>a</td>
+<td>Array</td>
+<td>Must be followed by a complete type which specifies the child type</td>
+</tr>
+<tr>
+<td>STRUCT</td>
+<td>(</td>
+<td>Array</td>
+<td>Types in the JS Array must match the types between the parens</td>
+</tr>
+<tr>
+<td>VARIANT</td>
+<td>v</td>
+<td>Variant</td>
+<td>This class is provided by the library.</td>
+</tr>
+<tr>
+<td>DICT_ENTRY</td>
+<td>{</td>
+<td>Object</td>
+<td>Must be included in an array type to be an object.</td>
+</tr>
+</tbody>
+</table>
+<p>The types <code>a</code>, <code>(</code>, <code>v</code>, and <code>{</code> are container types that hold other values. Examples of container types and JavaScript examples are in the table below.</p>
+<table>
+<thead>
+<tr>
+<th>Signature</th>
+<th>Example</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>(su)</code></td>
+<td><code>[ 'foo', 5 ]</code></td>
+<td>Each element in the array must match the corresponding type of the struct member.</td>
+</tr>
+<tr>
+<td><code>as</code></td>
+<td><code>[ 'foo', 'bar' ]</code></td>
+<td>The child type comes immediately after the <code>a</code>. The array can have any number of elements, but they all must match the child type.</td>
+</tr>
+<tr>
+<td><code>a{su}</code></td>
+<td><code>{ 'foo': 5 }</code></td>
+<td>An &quot;array of dict entries&quot; is represented by an Object. The type after <code>{</code> is the key type and the type before the <code>}</code> is the value type.</td>
+</tr>
+<tr>
+<td><code>ay</code></td>
+<td><code>Buffer.from([0x62, 0x75, 0x66])</code></td>
+<td>Special case: an array of bytes is represented by a Node <code>Buffer</code>.</td>
+</tr>
+<tr>
+<td><code>v</code></td>
+<td><code>new Variant('s', 'hello')</code></td>
+<td>Signature must be a single type. Value may be a container type.</td>
+</tr>
+<tr>
+<td><code>(asv)</code></td>
+<td><code>[ ['foo'], new Variant('s', 'bar') ]</code></td>
+<td>Containers may be nested.</td>
+</tr>
+</tbody>
+</table>
+<p>For more information on the DBus type system, see <a href="https://dbus.freedesktop.org/doc/dbus-specification.html#type-system">the specification</a>.</p>
+<h2>Contributing</h2>
+<p>Contributions are welcome. Development happens on <a href="https://github.com/acrisci/node-dbus-next">Github</a>.</p>
+<h2>Similar Projects</h2>
+<p>dbus-next is a fork of <a href="https://github.com/sidorares/dbus-native">dbus-native</a> library. While this library is great, it has many bugs which I don't think can be fixed without completely redesigning the user API. Another library exists <a href="https://github.com/Shouqun/node-dbus">node-dbus</a> which is similar, but also not provide enough features to create full-featured DBus services.</p>
+<h2>Copyright</h2>
+<p>You can use this code under an MIT license (see LICENSE).</p>
 <p>© 2012, Andrey Sidorov</p>
 <p>© 2018, Tony Crisci</p></article>
     </section>
@@ -220,13 +391,13 @@ bus.on('message', (msg) => {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="module-interface-Name.html">Name</a></li><li><a href="NameExistsError.html">NameExistsError</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DBUS_NAME_FLAG_ALLOW_REPLACEMENT">DBUS_NAME_FLAG_ALLOW_REPLACEMENT</a></li><li><a href="global.html#DBUS_NAME_FLAG_DO_NOT_QUEUE">DBUS_NAME_FLAG_DO_NOT_QUEUE</a></li><li><a href="global.html#DBUS_NAME_FLAG_REPLACE_EXISTING">DBUS_NAME_FLAG_REPLACE_EXISTING</a></li><li><a href="global.html#MESSAGE_FLAG_NO_AUTO_START">MESSAGE_FLAG_NO_AUTO_START</a></li><li><a href="global.html#MESSAGE_FLAG_NO_REPLY_EXPECTED">MESSAGE_FLAG_NO_REPLY_EXPECTED</a></li><li><a href="global.html#MESSAGE_TYPE_ERROR">MESSAGE_TYPE_ERROR</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_CALL">MESSAGE_TYPE_METHOD_CALL</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_RETURN">MESSAGE_TYPE_METHOD_RETURN</a></li><li><a href="global.html#MESSAGE_TYPE_SIGNAL">MESSAGE_TYPE_SIGNAL</a></li><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="MessageFlag.html">MessageFlag</a></li><li><a href="MessageType.html">MessageType</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="NameFlag.html">NameFlag</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="ReleaseNameReply.html">ReleaseNameReply</a></li><li><a href="RequestNameReply.html">RequestNameReply</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Apr 12 2019 10:24:40 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.2</a> on Sun Jun 02 2019 10:29:20 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

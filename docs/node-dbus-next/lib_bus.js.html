@@ -29,19 +29,32 @@
             <pre class="prettyprint source linenums"><code>const EventEmitter = require('events').EventEmitter;
 const constants = require('./constants');
 const handleMethod = require('./service/handlers');
-const { NameExistsError } = require('./errors');
-const Name = require('./service/name');
 const {DBusError} = require('./errors');
 const {Message} = require('./message-type');
+const ServiceObject = require('./service/object');
+const xml2js = require('xml2js');
 
-let {
+const {
+  METHOD_CALL,
+  METHOD_RETURN,
+  ERROR,
+  SIGNAL,
+} = constants.MessageType;
+
+const {
+  NO_REPLY_EXPECTED
+} = constants.MessageFlag;
+
+const {
   assertBusNameValid,
   assertObjectPathValid,
   assertInterfaceNameValid,
 } = require('./validators');
 
-let ProxyObject = require('./client/proxy-object');
-let { Interface } = require('./service/interface');
+const ProxyObject = require('./client/proxy-object');
+const { Interface } = require('./service/interface');
+
+const xmlHeader = `&lt;!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">\n`
 
 /**
  * @class
@@ -65,8 +78,8 @@ let { Interface } = require('./service/interface');
  * const bus = dbus.sessionBus();
  * // get a proxy object
  * let obj = await bus.getProxyObject('org.freedesktop.DBus', '/org/freedesktop/DBus');
- * // request a service name
- * let name = await bus.requestName('org.test.name');
+ * // request a well-known name
+ * await bus.requestName('org.test.name');
  */
 class MessageBus extends EventEmitter {
   /**
@@ -76,13 +89,14 @@ class MessageBus extends EventEmitter {
    */
   constructor(conn) {
     super();
+    this._builder = new xml2js.Builder({ headless: true });
     this._connection = conn;
     this._serial = 1;
     this._methodReturnHandlers = {};
     this._signals = new EventEmitter();
-    this._names = {};
     this._nameOwners = {};
     this._methodHandlers = [];
+    this._serviceObjects = {}
     /**
      * The unique name of the bus connection. This will be `null` until the
      * `MessageBus` is connected.
@@ -92,14 +106,14 @@ class MessageBus extends EventEmitter {
     this.name = null;
 
     let handleMessage = (msg) => {
-      if (msg.type === constants.messageType.METHOD_RETURN ||
-        msg.type === constants.messageType.ERROR) {
+      if (msg.type === METHOD_RETURN ||
+        msg.type === ERROR) {
         let handler = this._methodReturnHandlers[msg.replySerial];
         if (handler) {
           delete this._methodReturnHandlers[msg.replySerial];
           handler(msg);
         }
-      } else if (msg.type === constants.messageType.SIGNAL) {
+      } else if (msg.type === SIGNAL) {
         // if this is a name owner changed message, cache the new name owner
         let {sender, path, iface, member} = msg;
         if (sender === 'org.freedesktop.DBus' &amp;&amp;
@@ -167,7 +181,6 @@ class MessageBus extends EventEmitter {
     this.call(helloMessage)
       .then((msg) => {
         this.name = msg.body[0];
-        // TODO document this signal
         this.emit('connect');
       })
       .catch((err) => {
@@ -192,20 +205,13 @@ class MessageBus extends EventEmitter {
   };
 
   /**
-   * Request a well-known [`Name`]{@link module:interface~Name} on the bus. The
-   * `Name` can be used to export an [`Interface`]{@link
-   * module:interface~Interface} at an object path on the name. If the name is
-   * already taken and {@link DBUS_NAME_FLAG_DO_NOT_QUEUE} is given, the method
-   * may throw a {@link NameExistsError}. See {@link
-   * DBUS_NAME_FLAG_ALLOW_REPLACEMENT} and {@link
-   * DBUS_NAME_FLAG_REPLACE_EXISTING} for more information on the other name
-   * flags.
+   * Request a well-known name on the bus.
+   *
    * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name}
    *
    * @param name {string} - the well-known name on the bus to request.
-   * @param flags {NameFlags} - DBus name flags which affect the behavior of taking the name.
-   * @returns {Promise} - a Promise that resolves with the [`Name`]{@link
-   * module:interface~Name}.
+   * @param flags {NameFlag} - DBus name flags which affect the behavior of taking the name.
+   * @returns {Promise} - a Promise that resolves with the {@link RequestNameReply}.
    */
   requestName(name, flags) {
     flags = flags || 0;
@@ -221,24 +227,40 @@ class MessageBus extends EventEmitter {
       });
       this.call(requestNameMessage)
         .then((msg) => {
-          let result = msg.body[0];
-          if (result === constants.DBUS_REQUEST_NAME_REPLY_EXISTS) {
-            return reject(new NameExistsError(`the name already exists: ${name}`));
-          }
-          if (this._names[name]) {
-            let nameObj = this._names[name];
-            nameObj.flags = flags;
-            return resolve(nameObj);
-          }
-          let nameObj = new Name(this, name, flags);
-          this._names[name] = nameObj;
-          return resolve(nameObj);
+          return resolve(msg.body[0]);
         })
         .catch((err) => {
           return reject(err);
         });
     });
   }
+
+  /**
+   * Release this name. Requests that the name should no longer be owned by the
+   * {@link MessageBus}.
+   *
+   * @returns {Promise} A Promise that will resolve with the {@link ReleaseNameReply}.
+   */
+  releaseName(name) {
+    return new Promise((resolve, reject) => {
+      let msg = new Message({
+        path: '/org/freedesktop/DBus',
+        destination: 'org.freedesktop.DBus',
+        interface: 'org.freedesktop.DBus',
+        member: 'ReleaseName',
+        signature: 's',
+        body: [name]
+      });
+      this.call(msg)
+        .then((reply) => {
+          return resolve(reply.body[0]);
+        })
+        .catch((err) => {
+          return reject(err);
+        });
+    });
+  }
+
 
   /**
    * Disconnect this `MessageBus` from the bus.
@@ -258,8 +280,7 @@ class MessageBus extends EventEmitter {
   }
 
   /**
-   * A function to call when a message of type {@link
-   * MESSAGE_TYPE_METHOD_RETURN} is received. User handlers are run before
+   * A function to call when a message of type {@link MessageType.METHOD_RETURN} is received. User handlers are run before
    * default handlers.
    *
    * @callback methodHandler
@@ -273,7 +294,7 @@ class MessageBus extends EventEmitter {
    * MessageBus#removeMethodHandler}
    *
    * @param {methodHandler} - A function to handle a {@link Message} of type
-   * {@link MESSAGE_TYPE_METHOD_RETURN}. Takes the `Message` as the first
+   * {@link MessageType.METHOD_RETURN}. Takes the `Message` as the first
     * argument. Return `true` if the method is handled and no further handlers
     * will run.
    */
@@ -285,7 +306,7 @@ class MessageBus extends EventEmitter {
    * Remove a user method return handler that was previously added with {@link
    * MessageBus#addMethodHandler}.
    *
-   * @param {methodHandler} - A function that was previously added as a method handler with {@link 
+   * @param {methodHandler} - A function that was previously added as a method handler.
    */
   removeMethodHandler(fn) {
     for (let i = 0; i &lt; this._methodHandlers.length; ++i) {
@@ -296,7 +317,7 @@ class MessageBus extends EventEmitter {
   }
 
   /**
-   * Send a {@link Message} of type {@link MESSAGE_TYPE_METHOD_CALL} to the bus
+   * Send a {@link Message} of type {@link MessageType.METHOD_CALL} to the bus
    * and wait for the reply.
    *
    * @example
@@ -308,28 +329,28 @@ class MessageBus extends EventEmitter {
    * });
    * let reply = await bus.call(message);
    *
-   * @param {Message} msg - The message to send. Must be a METHOD_CALL.
-   * @returns {Promise} reply - A `Promise` that resolves to the `Message`
-   * which is a reply to the call.
+   * @param {Message} msg - The message to send.
+   * @returns {Promise} reply - A `Promise` that resolves to the {@link
+   * Message} which is a reply to the call.
    */
   call(msg) {
     return new Promise((resolve, reject) => {
       if (!(msg instanceof Message)) {
         throw new Error('The call() method takes a Message class as the first argument.');
       }
-      if (msg.type !== constants.messageType.METHOD_CALL) {
+      if (msg.type !== METHOD_CALL) {
         throw new Error('Only messages of type METHOD_CALL can expect a call reply.');
       }
       if (msg.serial === null || msg._sent) {
         msg.serial = this.newSerial();
       }
       msg._sent = true;
-      if (msg.flags &amp; constants.flags.noReplyExpected) {
+      if (msg.flags &amp; NO_REPLY_EXPECTED) {
         resolve(null);
       } else {
         this._methodReturnHandlers[msg.serial] = (reply) => {
           this._nameOwners[msg.destination] = reply.sender;
-          if (reply.type === constants.messageType.ERROR) {
+          if (reply.type === ERROR) {
             return reject(new DBusError(reply.errorName, reply.body[0], reply));
           } else {
             return resolve(reply);
@@ -361,6 +382,90 @@ class MessageBus extends EventEmitter {
     this._connection.message(msg);
   }
 
+  /**
+   * Export an [`Interface`]{@link module:interface~Interface} on the bus. See
+   * the documentation for that class for how to define service interfaces.
+   *
+   * @param path {string} - The object path to export this `Interface` on.
+   * @param iface {module:interface~Interface} - The service interface to export.
+   */
+  export(path, iface) {
+    let obj = this._getServiceObject(path);
+    obj.addInterface(iface);
+  }
+
+  /**
+   * Unexport an `Interface` on the bus. The interface will no longer be
+   * advertised to clients.
+   *
+   * @param {string} path - The object path on which to unexport.
+   * @param {module:interface~Interface} [iface] - The `Interface` to unexport.
+   * If not given, this will remove all interfaces on the path.
+   */
+  unexport(path, iface) {
+    iface = iface || null;
+    if (iface === null) {
+      this._removeServiceObject(path);
+    } else {
+      let obj = this._getServiceObject(path);
+      obj.removeInterface(iface);
+      if (!obj.interfaces.length) {
+        this._removeServiceObject(path);
+      }
+    }
+  }
+
+  _introspect(path) {
+    assertObjectPathValid(path);
+    let xml = {
+      node: {
+        node: []
+      }
+    };
+
+    if (this._serviceObjects[path]) {
+      xml.node.interface = this._serviceObjects[path].introspect();
+    }
+
+    let pathSplit = path.split('/').filter(n => n);
+
+    for (let key of Object.keys(this._serviceObjects)) {
+      let keySplit = key.split('/').filter(n => n);
+      if (keySplit.length &lt;= pathSplit.length) {
+        continue;
+      }
+      if (pathSplit.every((v, i) => v === keySplit[i])) {
+        let child = keySplit[pathSplit.length];
+        xml.node.node.push({
+          $: {
+            name: child
+          }
+        });
+      }
+    }
+
+    return xmlHeader + this._builder.buildObject(xml);
+  }
+
+  _getServiceObject(path) {
+    assertObjectPathValid(path);
+    if (!this._serviceObjects[path]) {
+      this._serviceObjects[path] = new ServiceObject(path, this);
+    }
+    return this._serviceObjects[path];
+  }
+
+  _removeServiceObject(path) {
+    assertObjectPathValid(path);
+    if (this._serviceObjects[path]) {
+      let obj = this._serviceObjects[path];
+      for (let i of Object.keys(obj.interfaces)) {
+        obj.removeInterface(obj.interfaces[i]);
+      }
+      delete this._serviceObjects[path];
+    }
+  }
+
   _addMatch(match) {
     let msg = new Message({
       path: '/org/freedesktop/DBus',
@@ -385,13 +490,13 @@ module.exports = MessageBus;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="module-interface-Name.html">Name</a></li><li><a href="NameExistsError.html">NameExistsError</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DBUS_NAME_FLAG_ALLOW_REPLACEMENT">DBUS_NAME_FLAG_ALLOW_REPLACEMENT</a></li><li><a href="global.html#DBUS_NAME_FLAG_DO_NOT_QUEUE">DBUS_NAME_FLAG_DO_NOT_QUEUE</a></li><li><a href="global.html#DBUS_NAME_FLAG_REPLACE_EXISTING">DBUS_NAME_FLAG_REPLACE_EXISTING</a></li><li><a href="global.html#MESSAGE_FLAG_NO_AUTO_START">MESSAGE_FLAG_NO_AUTO_START</a></li><li><a href="global.html#MESSAGE_FLAG_NO_REPLY_EXPECTED">MESSAGE_FLAG_NO_REPLY_EXPECTED</a></li><li><a href="global.html#MESSAGE_TYPE_ERROR">MESSAGE_TYPE_ERROR</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_CALL">MESSAGE_TYPE_METHOD_CALL</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_RETURN">MESSAGE_TYPE_METHOD_RETURN</a></li><li><a href="global.html#MESSAGE_TYPE_SIGNAL">MESSAGE_TYPE_SIGNAL</a></li><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="MessageFlag.html">MessageFlag</a></li><li><a href="MessageType.html">MessageType</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="NameFlag.html">NameFlag</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="ReleaseNameReply.html">ReleaseNameReply</a></li><li><a href="RequestNameReply.html">RequestNameReply</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Apr 12 2019 10:24:40 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.2</a> on Sun Jun 02 2019 10:29:20 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>

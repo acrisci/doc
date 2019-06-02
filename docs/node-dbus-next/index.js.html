@@ -70,88 +70,6 @@ module.exports.sessionBus = function(opts) {
 };
 
 /**
- * A flag for {@link MessageBus#requestName} to indicate this name allows other
- * clients to replace it as the name owner on request.
- *
- * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name}
- * @constant DBUS_NAME_FLAG_ALLOW_REPLACEMENT
- */
-module.exports.DBUS_NAME_FLAG_ALLOW_REPLACEMENT = constants.DBUS_NAME_FLAG_ALLOW_REPLACEMENT;
-
-/**
- * A flag for {@link MessageBus#requestName} to indicate this request should
- * replace an existing name if that name allows replacement.
- *
- * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name}
- * @constant DBUS_NAME_FLAG_REPLACE_EXISTING
- */
-module.exports.DBUS_NAME_FLAG_REPLACE_EXISTING = constants.DBUS_NAME_FLAG_REPLACE_EXISTING;
-
-/**
- * A flag for {@link MessageBus#requestName} to indicate this request should
- * not enter the queue of clients requesting this name if it is taken. The
- * request may fail with {@link NameExistsError} in this case.
- *
- * @see {@link https://dbus.freedesktop.org/doc/dbus-specification.html#bus-messages-request-name}
- * @constant DBUS_NAME_FLAG_DO_NOT_QUEUE
- */
-module.exports.DBUS_NAME_FLAG_DO_NOT_QUEUE = constants.DBUS_NAME_FLAG_DO_NOT_QUEUE;
-
-/**
- * An enum value for the {@link Message} `type` member to indicate the message
- * is a method call.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_TYPE_METHOD_CALL
- */
-module.exports.MESSAGE_TYPE_METHOD_CALL = constants.messageType.METHOD_CALL;
-
-/**
- * An enum value for the {@link Message} `type` member to indicate the message
- * is a method return.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_TYPE_METHOD_RETURN
- */
-module.exports.MESSAGE_TYPE_METHOD_RETURN = constants.messageType.METHOD_RETURN;
-
-/**
- * An enum value for the {@link Message} `type` member to indicate the message
- * is a signal.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_TYPE_SIGNAL
- */
-module.exports.MESSAGE_TYPE_SIGNAL = constants.messageType.SIGNAL;
-
-/**
- * An enum value for the {@link Message} `type` member to indicate the message
- * is an error reply.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_TYPE_ERROR
- */
-module.exports.MESSAGE_TYPE_ERROR = constants.messageType.ERROR;
-
-/**
- * A flag for the {@link Message} `flags` member to indicate no reply is
- * expected from this message.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_FLAG_NO_REPLY_EXPECTED
- */
-module.exports.MESSAGE_FLAG_NO_REPLY_EXPECTED = constants.flags.noReplyExpected;
-
-/**
- * A flag for the {@link Message} `flags` member to indicate this message
- * should not autostart a service.
- *
- * @see https://dbus.freedesktop.org/doc/dbus-specification.html#message-protocol
- * @constant MESSAGE_FLAG_NO_AUTO_START
- */
-module.exports.MESSAGE_FLAG_NO_AUTO_START = constants.flags.noAutoStart;
-
-/**
  * Use JSBI as a polyfill for long integer types ('x' and 't') in the client
  * and the service. This is required for Node verisons that do not support the
  * native `BigInt` class which is used by default for these types (version &lt;
@@ -162,12 +80,17 @@ module.exports.MESSAGE_FLAG_NO_AUTO_START = constants.flags.noAutoStart;
  */
 module.exports.setBigIntCompat = require('./lib/library-options').setBigIntCompat
 
+module.exports.NameFlag = constants.NameFlag;
+module.exports.RequestNameReply = constants.RequestNameReply;
+module.exports.ReleaseNameReply = constants.ReleaseNameReply;
+module.exports.MessageType = constants.MessageType;
+module.exports.MessageFlag = constants.MessageFlag;
+
 module.exports.interface = iface;
 module.exports.Variant = Variant;
 module.exports.Message = Message;
 module.exports.validators = require('./lib/validators');
 module.exports.DBusError = errors.DBusError;
-module.exports.NameExistsError = errors.NameExistsError;
 </code></pre>
         </article>
     </section>
@@ -178,13 +101,13 @@ module.exports.NameExistsError = errors.NameExistsError;
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="module-interface-Name.html">Name</a></li><li><a href="NameExistsError.html">NameExistsError</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#DBUS_NAME_FLAG_ALLOW_REPLACEMENT">DBUS_NAME_FLAG_ALLOW_REPLACEMENT</a></li><li><a href="global.html#DBUS_NAME_FLAG_DO_NOT_QUEUE">DBUS_NAME_FLAG_DO_NOT_QUEUE</a></li><li><a href="global.html#DBUS_NAME_FLAG_REPLACE_EXISTING">DBUS_NAME_FLAG_REPLACE_EXISTING</a></li><li><a href="global.html#MESSAGE_FLAG_NO_AUTO_START">MESSAGE_FLAG_NO_AUTO_START</a></li><li><a href="global.html#MESSAGE_FLAG_NO_REPLY_EXPECTED">MESSAGE_FLAG_NO_REPLY_EXPECTED</a></li><li><a href="global.html#MESSAGE_TYPE_ERROR">MESSAGE_TYPE_ERROR</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_CALL">MESSAGE_TYPE_METHOD_CALL</a></li><li><a href="global.html#MESSAGE_TYPE_METHOD_RETURN">MESSAGE_TYPE_METHOD_RETURN</a></li><li><a href="global.html#MESSAGE_TYPE_SIGNAL">MESSAGE_TYPE_SIGNAL</a></li><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-interface.html">interface</a></li><li><a href="module-validators.html">validators</a></li></ul><h3>Classes</h3><ul><li><a href="DBusError.html">DBusError</a></li><li><a href="Message.html">Message</a></li><li><a href="MessageBus.html">MessageBus</a></li><li><a href="MessageFlag.html">MessageFlag</a></li><li><a href="MessageType.html">MessageType</a></li><li><a href="module-interface-Interface.html">Interface</a></li><li><a href="NameFlag.html">NameFlag</a></li><li><a href="ProxyInterface.html">ProxyInterface</a></li><li><a href="ProxyObject.html">ProxyObject</a></li><li><a href="ReleaseNameReply.html">ReleaseNameReply</a></li><li><a href="RequestNameReply.html">RequestNameReply</a></li><li><a href="Variant.html">Variant</a></li></ul><h3>Global</h3><ul><li><a href="global.html#sessionBus">sessionBus</a></li><li><a href="global.html#setBigIntCompat">setBigIntCompat</a></li><li><a href="global.html#systemBus">systemBus</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Apr 12 2019 10:24:40 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.2</a> on Sun Jun 02 2019 10:29:20 GMT-0400 (Eastern Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
