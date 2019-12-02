@@ -107,7 +107,7 @@ in the class that extends it.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lib_service_interface.js.html">lib/service/interface.js</a>, <a href="lib_service_interface.js.html#line250">line 250</a>
+        <a href="lib_service_interface.js.html">lib/service/interface.js</a>, <a href="lib_service_interface.js.html#line255">line 255</a>
     </li></ul></dd>
     
 
@@ -170,6 +170,273 @@ name.export('/org/test/path', iface);</code></pre>
 
     
         <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    
+    <h4 class="name" id=".configureMembers"><span class="type-signature">(static) </span>configureMembers<span class="signature">(members)</span><span class="type-signature"></span></h4>
+    
+
+    
+
+
+
+<div class="description">
+    <p>An alternative to the decorator functions to configure
+<a href="module-interface-Interface.html"><code>Interface</code></a> DBus members when
+decorators cannot be supported.</p>
+<p><em>Calling this method twice on the same <code>Interface</code> or mixing this method
+with the decorator interface will result in undefined behavior that may be
+specified at a future time.</em></p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>members</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Member configuration object.</p>
+                <h6>Properties</h6>
+                
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>properties</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The class methods to define as
+properties. The key should be a method defined on the class and the value
+should be the options for a <a href="module-interface.html#.property">property</a>
+decorator.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>methods</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The class methods to define as DBus
+methods. The key should be a method defined on the class and the value
+should be the options for a <a href="module-interface.html#.method">method</a>
+decorator.</p></td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>signals</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">Object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>The class methods to define as signals.
+The key should be a method defined on the class and hte value should be
+options for a <a href="module-interface.html#.signal">signal</a> decorator.</p></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+            </td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="lib_service_interface.js.html">lib/service/interface.js</a>, <a href="lib_service_interface.js.html#line304">line 304</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>ConfiguredInterface.configureMembers({
+  properties: {
+    SomeProperty: {
+      signature: 's'
+    }
+  },
+  methods: {
+    Echo: {
+      inSignature: 'v',
+      outSignature: 'v'
+    }
+  },
+  signals: {
+    HelloWorld: {
+      signature: 'ss'
+    }
+  }
+});</code></pre>
+
+
 
         
             
@@ -326,7 +593,7 @@ invalidated properties. Pass the properties as JavaScript values.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="lib_service_interface.js.html">lib/service/interface.js</a>, <a href="lib_service_interface.js.html#line270">line 270</a>
+        <a href="lib_service_interface.js.html">lib/service/interface.js</a>, <a href="lib_service_interface.js.html#line349">line 349</a>
     </li></ul></dd>
     
 
@@ -383,7 +650,7 @@ invalidated properties. Pass the properties as JavaScript values.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.2</a> on Sun Jun 02 2019 10:29:20 GMT-0400 (Eastern Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.3</a> on Mon Dec 02 2019 09:58:11 GMT-0500 (Eastern Standard Time)
 </footer>
 
 <script> prettyPrint(); </script>
